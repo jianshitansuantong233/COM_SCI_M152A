@@ -67,7 +67,7 @@ clk, AN,CA,CB,CC,CD,CE,CF,CG,ADJ,pause,reset,led,LED
     assign led[2]=indicator_adj;*/
     reg [2:0]debouncer;
     reg allow_blink;
-    assign indicator_adj=allow_blink|(adj_state[1]^adj_state[0]);
+    assign indicator_adj=(!allow_blink&(adj_state[1]^adj_state[0]))||(allow_blink&!adj_state[1]);
     always @(negedge clk_adj or posedge reset) begin
         if(reset) begin
             ct_adj<=0;
@@ -80,7 +80,7 @@ clk, AN,CA,CB,CC,CD,CE,CF,CG,ADJ,pause,reset,led,LED
             debouncer<={ADJ,debouncer[2:1]};
             allow_blink<=(ct_adj>=4'b1111);
             if(ct_adj>=4'b1111) begin //30
-                adj_state<=debouncer[0]&!debouncer[1]&!debouncer[2] ? nx_adj_state:adj_state;
+                adj_state<=(debouncer[0]&!debouncer[1]&!debouncer[2]) ? nx_adj_state:adj_state;
             end
         end
     end
