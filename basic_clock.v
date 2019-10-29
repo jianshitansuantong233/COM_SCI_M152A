@@ -1,5 +1,5 @@
-module basic_clock(reset,indicator_pa,indicator_adj,clk,clk_div,clk_adj,AN,CA,CB,CC,CD,CE,CF,CG,sig_adj,ADJ,led);
-    input clk_div,clk_adj,reset,clk,ADJ,indicator_pa,indicator_adj;
+module basic_clock(allow_blink,reset,indicator_pa,indicator_adj,clk,clk_div,clk_adj,AN,CA,CB,CC,CD,CE,CF,CG,sig_adj,ADJ,led);
+    input allow_blink, clk_div,clk_adj,reset,clk,ADJ,indicator_pa,indicator_adj;
     input [1:0] sig_adj;
     output [1:0] led;
     output CA,CB,CC,CD,CE,CF,CG;
@@ -69,48 +69,43 @@ module basic_clock(reset,indicator_pa,indicator_adj,clk,clk_div,clk_adj,AN,CA,CB
     //block making the stopwatch to blink
     integer cl;
     reg [9:0] ct_adj_blink;
-    reg indicator_1; 
     always @(negedge clk_div or posedge reset) begin
         if(reset) begin
             AN[3:0]<=4'b1111;
             cl<=0;
-            indicator_1<=0;
-            ct_adj_blink<=0;
-        end else if(sig_adj[1]&&!indicator_1) begin
-            indicator_1<=1;
             ct_adj_blink<=0;
         end else if(cl==0)begin
-            if(sig_adj==2) begin
+            if((sig_adj==2&&!allow_blink) || (allow_blink&&sig_adj==1)) begin
+                ct_adj_blink<=ct_adj_blink+2;
                 if(ct_adj_blink>=9'b1111_1010_0&&ct_adj_blink<10'b1111_1010_00)    AN[3:0]<=4'b1110;
-                else if(ct_adj_blink==10'b1111_1010_00) ct_adj_blink<=0;
+                else if(ct_adj_blink>=10'b1111_1010_00) ct_adj_blink<=0;
                 else AN[3:0]<=4'b1111;
             end else AN[3:0]<=4'b1110;
             cl<=cl+1;
-            ct_adj_blink<=ct_adj_blink+1;
         end else if(cl==1) begin
-            if(sig_adj==2) begin
+            if((sig_adj==2&&!allow_blink) || (allow_blink&&sig_adj==1)) begin
+                ct_adj_blink<=ct_adj_blink+2;
                 if(ct_adj_blink>=9'b1111_1010_0&&ct_adj_blink<10'b1111_1010_00) AN[3:0]<=4'b1101;
-                else if(ct_adj_blink==10'b1111_1010_00) ct_adj_blink<=0;
+                else if(ct_adj_blink>=10'b1111_1010_00) ct_adj_blink<=0;
                 else AN[3:0]<=4'b1111;
             end else AN[3:0]<=4'b1101;
             cl<=cl+1;
-            ct_adj_blink<=ct_adj_blink+1;
         end else if(cl==2) begin
-            if(sig_adj==1) begin
+            if((sig_adj==1&&!allow_blink) || (allow_blink&&sig_adj==0)) begin
+                 ct_adj_blink<=ct_adj_blink+2;
                  if(ct_adj_blink>=9'b1111_1010_0&&ct_adj_blink<10'b1111_1010_00) AN[3:0]<=4'b1011;
-                 else if(ct_adj_blink==10'b1111_1010_00) ct_adj_blink<=0;
+                 else if(ct_adj_blink>=10'b1111_1010_00) ct_adj_blink<=0;
                  else AN[3:0]<=4'b1111;
             end else AN[3:0]<=4'b1011;
             cl<=cl+1;
-            ct_adj_blink<=ct_adj_blink+1;
         end else if(cl==3)  begin
-            if(sig_adj==1) begin
+            if((sig_adj==1&&!allow_blink) || (allow_blink&&sig_adj==0)) begin
+                ct_adj_blink<=ct_adj_blink+2;
                  if(ct_adj_blink>=9'b1111_1010_0&&ct_adj_blink<10'b1111_1010_00) AN[3:0]<=4'b0111;
-                 else if(ct_adj_blink==10'b1111_1010_00) ct_adj_blink<=0;
+                 else if(ct_adj_blink>=10'b1111_1010_00) ct_adj_blink<=0;
                  else AN[3:0]<=4'b1111;
             end else AN[3:0]<=4'b0111;
-            cl<=0;
-            ct_adj_blink<=ct_adj_blink+1;
+            cl<=0; 
         end
     end
 

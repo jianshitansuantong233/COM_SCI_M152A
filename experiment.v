@@ -59,25 +59,30 @@ clk, AN,CA,CB,CC,CD,CE,CF,CG,ADJ,pause,reset,led,LED
     //debouncer
     reg LED;
     wire indicator_adj;
-    reg [3:0]ct_adj;
+    reg [20:0]ct_adj;
     reg [1:0]adj_state;
     reg [1:0]nx_adj_state;
     /*assign led[0]=sig_adj[0];
     assign led[1]=sig_adj[1];
     assign led[2]=indicator_adj;*/
-    assign indicator_adj=adj_state[1]^adj_state[0];
+    reg [2:0]debouncer;
+    reg allow_blink;
+    assign indicator_adj=allow_blink|(adj_state[1]^adj_state[0]);
     always @(negedge clk_adj or posedge reset) begin
         if(reset) begin
             ct_adj<=0;
             adj_state<=0;
             LED<=0;
-        end else if(ADJ==1'b1) begin
-            ct_adj<=ct_adj+1;
+            debouncer<=3'b000;
+            allow_blink<=0;
+        end else begin
+            ct_adj<= debouncer[0]&!debouncer[1]&!debouncer[2] ? 0:ct_adj+ADJ;
+            debouncer<={ADJ,debouncer[2:1]};
+            allow_blink<=(ct_adj>=4'b1111);
             if(ct_adj>=4'b1111) begin //30
-                adj_state<=nx_adj_state;               
-                ct_adj<=4'b0000;
+                adj_state<=debouncer[0]&!debouncer[1]&!debouncer[2] ? nx_adj_state:adj_state;
             end
-        end else ct_adj<=0;
+        end
     end
     always @(*) begin
         nx_adj_state=0;
@@ -95,5 +100,5 @@ clk, AN,CA,CB,CC,CD,CE,CF,CG,ADJ,pause,reset,led,LED
     end
     wire indicator_pa;
     pa p(clk,pause,reset,adj_state,indicator_pa);
-    basic_clock ba(reset, indicator_pa,indicator_adj,clk,clk_div,clk_adj,AN[7:4],CA,CB,CC,CD,CE,CF,CG,adj_state,ADJ,led);
+    basic_clock ba(allow_blink, reset, indicator_pa,indicator_adj,clk,clk_div,clk_adj,AN[7:4],CA,CB,CC,CD,CE,CF,CG,adj_state,ADJ,led);
 endmodule
